@@ -54,7 +54,7 @@ $ ./moodle_to_atena.py Usuarios.csv participants.csv
 
 para gerar os arquivos `PautaAtena.csv` e `PautaAtena.xls`.
 Você provavelmente vai querer salvar a saída desse script (todos
-os "warnings" em algum lugar).
+os "warnings") em algum lugar.
 
 
 # 3. Gerar o PDF do lote de provas
@@ -98,6 +98,10 @@ o DRE dele no arquivo `PautaAtena.csv` (digamos que o DRE é
 ```
 32,123456789
 ```
+
+Em particular, você deve gerar uma linha dessas (ou mais de uma linha,
+caso as provas tenham mais de uma página) para cada prova
+extra (sem nome, fora da pauta) gerada pelo Atena.
 
 
 ## 4.3. Rodando o script
