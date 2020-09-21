@@ -176,11 +176,13 @@ if __name__ == "__main__":
                 for row in known_values.itertuples():
                     if row.Index == pgnum:
                         dre = row.dre
+                        if dre not in dre_to_pages_map:
+                            dre_to_pages_map[dre] = []
                         break
                 else:
                     print()
-                    error(f"Não foi possível encontrar nenhum nome "
-                            f"na página {pgnum} do lote de provas. "
+                    error(f"Não foi possível encontrar qual o nome "
+                            f"da página {pgnum} do lote de provas. "
                             f"Leia manualmente esta página, e "
                             f"adicione o DRE do aluno ao arquivo de "
                             f"'known values'.")

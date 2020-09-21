@@ -142,8 +142,9 @@ if __name__ == "__main__":
             dre = f"999001{count_missing_dre:03}"
             count_missing_dre += 1
             warn(f"O aluno de email <{row.Email}> e nome "
-                    f"'{nome_completo}' se inscreveu com DRE=111111111. "
-                    f"Ele vai entrar na pauta com DRE={dre}.")
+                    f"'{nome_completo}' se inscreveu com "
+                    f"DRE=111111111. Ele vai entrar na pauta com "
+                    f"DRE={dre}.")
 
         # Gambiarra para pegar um DRE repetido
         if dre == "115023496":
