@@ -70,8 +70,8 @@ def find_name_in_pdf(name, filename):
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(
-        diescription="Separa o PDF de lote de provas em um para cada "
-                     "DRE.")
+        description="Separa o PDF de lote de provas em um para cada "
+                    "DRE.")
 
     parser.add_argument(
         "--no-colors",
