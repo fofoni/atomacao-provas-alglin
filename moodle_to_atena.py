@@ -62,6 +62,15 @@ if __name__ == "__main__":
     )
 
     parser.add_argument(
+        "--start-extra-dre-at",
+        # TODO: fazer com que isso não ~dê ruim~
+        help="Valor inicial para DREs coringas. De 0 a 999 (mas se o "
+             "total passar de 999 vai dar ruim). O default é zero.",
+        type=int,
+        default=0,
+    )
+
+    parser.add_argument(
         "USUARIOS_CSV",
         help="Arquivo CSV com todos os usuários cadastrados no "
              "Moodle, conforme descrito no README.",
@@ -91,7 +100,7 @@ if __name__ == "__main__":
         columns={"Endereço de email": "Email"}, inplace=True)
 
     pauta = []  # lista de dicts
-    count_missing_dre = 0
+    count_missing_dre = args.start_extra_dre_at
     for row in participants.itertuples():
 
         # Verifica que este email já não está na pauta
