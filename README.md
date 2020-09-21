@@ -1,7 +1,8 @@
 # 1. Baixar a pauta do Moodle
 
 No Moodle, baixamos 2 CSVs. Um com *todos* os usuários do moodle
-inteiro, que contém todas as informações de identificação, e outro com
+inteiro, que contém todas as informações de identificação, e outro
+sem muita informação, mas que tem somente os usuários que queremos.
 
 * "Administração do Site" > "Usuários" > "Contas/Ações em lote sobre
     usuários" > "Usuários na lista/Adicione todos". Agora, lá em baixo
@@ -19,5 +20,93 @@ inteiro, que contém todas as informações de identificação, e outro com
     da tabela como" CSV. Vamos chamar esse arquivos de
     `participants.csv`.
 
+O primeiro arquivo (`Usuarios.csv`) deve ter as colunas:
+`username`, `email`, `firstname`, `lastname`, `idnumber` (entre outras,
+e não necessariamente nessa ordem).
+
+O segundo arquivo
+(`participants.csv`) deve ter as colunas:
+`Nome`, `Sobrenome`, `Endereço de email` (novamente: pode haver
+outras colunas, e a ordem não precisa ser essa).
+
 
 # 2. Gerar a pauta para o AtenaME
+
+(ATENÇÃO: o script a seguir cria os arquivos `PautaAtena.csv` e
+`PautaAtena.xls`, e deleta o conteúdo anterior desses arquivos caso
+existissem.)
+
+Use o comando:
+
+```
+$ ./moodle_to_atena.py Usuarios.csv participants.csv
+```
+
+para gerar os arquivos `PautaAtena.csv` e `PautaAtena.xls`.
+
+
+# 3. Gerar o PDF do lote de provas
+
+Use o AtenaME, com o arquivo de pauta `PautaAtena.xls`, para gerar
+o PDF do lote de testes. Vamos chamar esse pdf de `Lote.pdf`.
+
+
+# 4. Separando os PDFs
+
+
+# 4.1. `pdfgrep`
+
+Certifique-se de que você tem o `pdfgrep` instalado no seu sistema.
+Procure por `pdfgrep` no package manager da sua distribuição, ou então
+baixe de um dos sites:
+
+* https://pdfgrep.org/
+* https://gitlab.com/pdfgrep/pdfgrep
+* https://sourceforge.net/projects/pdfgrep
+
+
+# 4.2. Arquivo `known_values.csv`
+
+Crie um arquivo `known_values.csv` (o nome não precisa ser esse)
+com somente uma linha:
+
+```
+pgnum,dre
+```
+
+Ou seja, é um CSV que é uma tabela vazia. Se o script a seguir
+não conseguir descobrir qual o nome do aluno referente a uma
+certa página do pdf de lote de provas, você vai precisar adicionar
+uma linha neste CSV de 'known values'. Por exemplo, se o script
+não conseguir descobrir o nome que está na página 32, você vai
+precisar descobrir manualmente qual o nome do aluno, procurar
+o DRE dele no arquivo `PautaAtena.csv` (digamos que o DRE é
+123456789), e adicionar a seguinte linha ao `known_values.csv`:
+
+```
+32,123456789
+```
+
+
+# 4.3. Rodando o script
+
+Faça:
+
+```
+./split_pdfs.py Lote.pdf <N> PautaAtena.csv known_values.csv Provas
+```
+
+onde `N` é a quantidade de páginas de "lista de presença" no início
+do arquivo `Lote.pdf`, e `Provas` é o nome de um diretório
+*inexistente*. Atenção:
+
+* Se o diretório
+    já existir, o script vai dar um erro e não vai fazer nada (mas o
+    erro é só no final, e vc vai perder tempo, pq ele é lerdo).
+* `Provas` deve ser somente um *nome*, e não um path inteiro. O
+    diretório será criado no `$PWD`.
+
+Quando o script terminar de executar, as provas estarão no diretório
+`Provas/`. Além disso, ele salva uma versão "zipada" desse diretório,
+com o mesmo nome, terminando com `.zip` (por exemplo, `Provas.zip`),
+também no `$PWD`.
