@@ -128,6 +128,7 @@ if __name__ == "__main__":
         ).upper()
 
         dre = email_matches[0].idnumber
+
         if dre is pd.StringDtype().na_value:
             dre = f"999001{count_missing_dre:03}"
             count_missing_dre += 1
@@ -135,6 +136,23 @@ if __name__ == "__main__":
                     f"'{nome_completo}' está SEM DRE no arquivo "
                     f"PARTICIPANTS_CSV. Ele vai entrar na pauta "
                     f"com DRE={dre}.")
+
+        # Gambiarra para pegar alunos que colocaram 111111111 no DRE
+        if dre == "111111111":
+            dre = f"999001{count_missing_dre:03}"
+            count_missing_dre += 1
+            warn(f"O aluno de email <{row.Email}> e nome "
+                    f"'{nome_completo}' se inscreveu com DRE=111111111. "
+                    f"Ele vai entrar na pauta com DRE={dre}.")
+
+        # Gambiarra para pegar um DRE repetido
+        if dre == "115023496":
+            dre = f"999001{count_missing_dre:03}"
+            count_missing_dre += 1
+            warn(f"O aluno de email <{row.Email}> e nome "
+                    f"'{nome_completo}' se inscreveu com DRE=115023496 "
+                    f"(duplicado). Ele vai entrar na pauta com "
+                    f"DRE={dre}.")
 
         # Verifica que este DRE já não está na pauta
         ok = True
