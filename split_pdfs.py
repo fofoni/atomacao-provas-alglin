@@ -3,7 +3,8 @@
 
 import sys
 import tempfile
-import pathlib, os
+import pathlib
+import os
 import shutil
 import subprocess
 import argparse
@@ -39,72 +40,81 @@ except ModuleNotFoundError:
                     d[k] = ""
         else:
             print("WARNING: faça 'pip install colorama' para que as "
-                    "cores funcionem de forma cross-platform.",
-                    file=sys.stderr)
+                  "cores funcionem de forma cross-platform.",
+                  file=sys.stderr)
         TermColors_Fore = collections.namedtuple(
-                "TermColors_Fore", fore_dict.keys())
+            "TermColors_Fore", fore_dict.keys())
         Fore = TermColors_Fore(*fore_dict.values())
         TermColors_Style = collections.namedtuple(
-                "TermColors_Style", style_dict.keys())
+            "TermColors_Style", style_dict.keys())
         Style = TermColors_Style(*style_dict.values())
 
 
 def warn(txt):
     print(f"{Fore.RED}WARNING:{Style.RESET_ALL} {txt}",
-            file=sys.stderr)
+          file=sys.stderr)
+
 
 def error(txt):
     print(f"{Fore.RED}ERROR:{Style.RESET_ALL} {txt}",
-            file=sys.stderr)
+          file=sys.stderr)
 
 
 def find_name_in_pdf(name, filename):
-    result = subprocess.run(['pdfgrep', name, os.fspath(filename)],
-            stdout=subprocess.DEVNULL)
+    result = subprocess.run(
+        ['pdfgrep', name, os.fspath(filename)],
+        stdout=subprocess.DEVNULL)
     return result.returncode == 0
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description=
-            "Separa o PDF de lote de provas em um para cada DRE.")
+    parser = argparse.ArgumentParser(
+        diescription="Separa o PDF de lote de provas em um para cada "
+                     "DRE.")
 
-    parser.add_argument("--no-colors",
-            help="Se não encontrar o pacote 'colorama', não tenta "
-                    "usar cores.",
-            action='store_false',
-            dest='use_colors',
+    parser.add_argument(
+        "--no-colors",
+        help="Se não encontrar o pacote 'colorama', não tenta "
+             "usar cores.",
+        action='store_false',
+        dest='use_colors',
     )
 
-    parser.add_argument("LOTE_PDF",
-            help="Arquivo de lote de provas, gerado pelo AtenaME.",
-            type=pathlib.Path,
+    parser.add_argument(
+        "LOTE_PDF",
+        help="Arquivo de lote de provas, gerado pelo AtenaME.",
+        type=pathlib.Path,
     )
 
-    parser.add_argument("SKIP_PAGES",
-            help="Quantidade de páginas de lista de presença no início "
-                    "do LOTE_PDF, conforme o README.",
-            type=int,
+    parser.add_argument(
+        "SKIP_PAGES",
+        help="Quantidade de páginas de lista de presença no início "
+             "do LOTE_PDF, conforme o README.",
+        type=int,
     )
 
-    parser.add_argument("PAUTA_CSV",
-            help="Arquivo de pauta gerado pelo moodle_to_atena.py.",
-            type=pathlib.Path,
+    parser.add_argument(
+        "PAUTA_CSV",
+        help="Arquivo de pauta gerado pelo moodle_to_atena.py.",
+        type=pathlib.Path,
     )
 
     # TODO: criar o known_values.csv automaticamente caso não exista.
     #       essa opção deve passar a ser opcional
-    parser.add_argument("KNOWN_VALUES_CSV",
-            help="Tabela de DREs verificados manualmente, conforme "
-                    "descrito no README.",
-            type=pathlib.Path,
+    parser.add_argument(
+        "KNOWN_VALUES_CSV",
+        help="Tabela de DREs verificados manualmente, conforme "
+             "descrito no README.",
+        type=pathlib.Path,
     )
 
-    parser.add_argument("PROVAS_DIR",
-            help="Nome de diretório (inexistente) onde as provas "
-                    "serão salvas. O mesmo nome (seguido de .zip) "
-                    "será usado para o zip. Leia o README.",
-            type=pathlib.Path,
+    parser.add_argument(
+        "PROVAS_DIR",
+        help="Nome de diretório (inexistente) onde as provas "
+             "serão salvas. O mesmo nome (seguido de .zip) "
+             "será usado para o zip. Leia o README.",
+        type=pathlib.Path,
     )
 
     args = parser.parse_args()
@@ -112,9 +122,10 @@ if __name__ == "__main__":
     init()  # Inicializa as cores
 
     ### Lê o arquivo de pauta
-    pauta_atena = pd.read_csv(args.PAUTA_CSV,
-            index_col='numeracao',
-            dtype={'dre': 'string'})
+    pauta_atena = pd.read_csv(
+        args.PAUTA_CSV,
+        index_col='numeracao',
+        dtype={'dre': 'string'})
     assert pauta_atena['dre'].is_unique
     assert pauta_atena['email'].is_unique
     if not pauta_atena['nomecompleto'].is_unique:
@@ -122,14 +133,15 @@ if __name__ == "__main__":
         mask = pauta_atena['nomecompleto'].duplicated(keep=False)
         masked_df = pauta_atena.loc[mask]
         print(masked_df[['email', 'dre', 'nomecompleto']],
-                file=sys.stderr)
+              file=sys.stderr)
 
     ### Lê o arquivo de known values
-    known_values = pd.read_csv(args.KNOWN_VALUES_CSV,
-            index_col='pgnum',
-            dtype={'dre': 'string'})
-    assert known_values.index.is_unique, "Entradas duplicadas no " \
-            "arquivo de 'known values'."
+    known_values = pd.read_csv(
+        args.KNOWN_VALUES_CSV,
+        index_col='pgnum',
+        dtype={'dre': 'string'})
+    assert known_values.index.is_unique, \
+        "Entradas duplicadas no arquivo de 'known values'."
 
     ### Dict que diz quais páginas do PDF de lote estão associadas
     ### a cada DRE.
@@ -163,11 +175,11 @@ if __name__ == "__main__":
         num_files_digits = floor(log10(num_files + args.SKIP_PAGES)) + 1
         for i, filename in enumerate(sorted(pages_dir.iterdir())):
             pgnum = int(filename.stem)
-            assert i+1 == pgnum - args.SKIP_PAGES
-            print("\r> Procurando nomes em cada página:"
-                    f"{pgnum: {num_files_digits}}"
-                    f"/{num_files + args.SKIP_PAGES}",
-                    end='')
+            assert i + 1 == pgnum - args.SKIP_PAGES
+            print(f"\r> Procurando nomes em cada página:"
+                  f"{pgnum: {num_files_digits}}"
+                  f"/{num_files + args.SKIP_PAGES}",
+                  end='')
             names_found = []
             for row in pauta_atena.itertuples():
                 if find_name_in_pdf(row.nomecompleto, filename):
@@ -182,10 +194,10 @@ if __name__ == "__main__":
                 else:
                     print()
                     error(f"Não foi possível encontrar qual o nome "
-                            f"da página {pgnum} do lote de provas. "
-                            f"Leia manualmente esta página, e "
-                            f"adicione o DRE do aluno ao arquivo de "
-                            f"'known values'.")
+                          f"da página {pgnum} do lote de provas. "
+                          f"Leia manualmente esta página, e "
+                          f"adicione o DRE do aluno ao arquivo de "
+                          f"'known values'.")
                     raise ValueError()
             else:
                 dre = names_found[0].dre
@@ -204,12 +216,12 @@ if __name__ == "__main__":
                     print()
                     print_newline = False
                 warn(f"O DRE {dre} está presente na pauta, mas não foi "
-                        f"encontrado no lote! Ele vai ficar sem prova!")
+                     f"encontrado no lote! Ele vai ficar sem prova!")
                 continue
             this_min = min(
-                    int(file.stem) for file in dre_to_pages_map[dre])
+                int(file.stem) for file in dre_to_pages_map[dre])
             this_max = max(
-                    int(file.stem) for file in dre_to_pages_map[dre])
+                int(file.stem) for file in dre_to_pages_map[dre])
             if prev_max is not None:
                 assert this_min == prev_max + 1
             prev_max = this_max
@@ -227,16 +239,16 @@ if __name__ == "__main__":
 
         provas_dir = (pathlib.Path() / args.PROVAS_DIR).resolve()
         print(f"> Colocando as provas no diretório {provas_dir} ...",
-                end='')
+              end='')
         provas_dir.mkdir()
         for filename in final_dir.iterdir():
             shutil.copyfile(
-                    os.fspath(filename),
-                    os.fspath(provas_dir / filename.name)
+                os.fspath(filename),
+                os.fspath(provas_dir / filename.name)
             )
         print()
 
-    print(f"> Gerando o zip...", end='')
+    print("> Gerando o zip...", end='')
     shutil.make_archive(
         os.fspath(provas_dir), "zip",
         root_dir=os.fspath(provas_dir.parent),
