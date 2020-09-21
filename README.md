@@ -32,6 +32,16 @@ outras colunas, e a ordem não precisa ser essa).
 
 # 2. Gerar a pauta para o AtenaME
 
+
+## 2.1. Gambiarras
+
+Dê uma olhada nas partes do arquivo `moodle_to_atena.py` que estão
+marcadas como "gambiarra", e verifique que é isso mesmo que você quer.
+Se não for, delete essas partes.
+
+
+## 2.2. Rodar o script
+
 (ATENÇÃO: o script a seguir cria os arquivos `PautaAtena.csv` e
 `PautaAtena.xls`, e deleta o conteúdo anterior desses arquivos caso
 existissem.)
@@ -43,6 +53,8 @@ $ ./moodle_to_atena.py Usuarios.csv participants.csv
 ```
 
 para gerar os arquivos `PautaAtena.csv` e `PautaAtena.xls`.
+Você provavelmente vai querer salvar a saída desse script (todos
+os "warnings" em algum lugar).
 
 
 # 3. Gerar o PDF do lote de provas
@@ -54,7 +66,7 @@ o PDF do lote de testes. Vamos chamar esse pdf de `Lote.pdf`.
 # 4. Separando os PDFs
 
 
-# 4.1. `pdfgrep`
+## 4.1. `pdfgrep`
 
 Certifique-se de que você tem o `pdfgrep` instalado no seu sistema.
 Procure por `pdfgrep` no package manager da sua distribuição, ou então
@@ -65,7 +77,7 @@ baixe de um dos sites:
 * https://sourceforge.net/projects/pdfgrep
 
 
-# 4.2. Arquivo `known_values.csv`
+## 4.2. Arquivo `known_values.csv`
 
 Crie um arquivo `known_values.csv` (o nome não precisa ser esse)
 com somente uma linha:
@@ -88,7 +100,7 @@ o DRE dele no arquivo `PautaAtena.csv` (digamos que o DRE é
 ```
 
 
-# 4.3. Rodando o script
+## 4.3. Rodando o script
 
 Faça:
 
