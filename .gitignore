@@ -2,4 +2,5 @@
 *.xls
 *.pdf
 *.zip
+*.txt
 .python-version
