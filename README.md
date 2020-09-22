@@ -15,7 +15,7 @@ sem muita informação, mas que tem somente os usuários que queremos.
     "Usuários/Usuários inscritos". No "Corresponder", selecione
     "Grupos", e então selecione quais grupos queremos. (Para gerar
     a pauta de alunos para os quais vamos gerar PDFs de provas.) Agora,
-    "Aplicar filtros". Por fim, lá em baixo, "Selecione todos os <N>
+    "Aplicar filtros". Por fim, lá em baixo, "Selecione todos os *N*
     usuários" e "Com usuários selecionados..." escolha "Baixar dados
     da tabela como" CSV. Vamos chamar esse arquivos de
     `participants.csv`.
@@ -57,10 +57,11 @@ Você provavelmente vai querer salvar a saída desse script (todos
 os "warnings") em algum lugar.
 
 
-# 3. Gerar o PDF do lote de provas
+# 3. Gerar o lote de provas
 
 Use o AtenaME, com o arquivo de pauta `PautaAtena.xls`, para gerar
 o PDF do lote de testes. Vamos chamar esse pdf de `Lote.pdf`.
+Baixe também a base de correção, `Lote.gab`.
 
 
 # 4. Separando os PDFs
@@ -126,3 +127,20 @@ Quando o script terminar de executar, as provas estarão no diretório
 `Provas/`. Além disso, ele salva uma versão "zipada" desse diretório,
 com o mesmo nome, terminando com `.zip` (por exemplo, `Provas.zip`),
 também no `$PWD`.
+
+
+# 5. Correção
+
+
+## 5.1. Baixar as respostas
+
+Antes de mais nada, certifique-se de que o horário de submissão das
+respostas já passou!
+
+No Moodle, abra o questionário, vá na engrenagem, e debaixo de
+"Resultados", clique em "Respostas". Em "Baixar dados da tabela como",
+certifique-se de que a opção selecionada é CSV, e clique em "Download".
+Vamos chamar o arquivo baixado de `Respostas.csv`.
+
+
+## 5.2. (TODO)
