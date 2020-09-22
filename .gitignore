@@ -4,4 +4,6 @@
 *.zip
 *.txt
 *.gab
+/data
+/build
 .python-version
