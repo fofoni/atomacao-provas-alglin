@@ -63,6 +63,10 @@ Use o AtenaME, com o arquivo de pauta `PautaAtena.xls`, para gerar
 o PDF do lote de testes. Vamos chamar esse pdf de `Lote.pdf`.
 Baixe também a base de correção, `Lote.gab`.
 
+O arquivo ZIP que o AtenaME fornece para representar o teste inteiro
+não será usado para nada ao longo dessas instruções. Mesmo assim,
+não custa nada: baixe também.
+
 
 # 4. Separando os PDFs
 
@@ -138,8 +142,15 @@ Antes de mais nada, certifique-se de que o horário de submissão das
 respostas já passou!
 
 No Moodle, abra o questionário, vá na engrenagem, e debaixo de
-"Resultados", clique em "Respostas". Em "Baixar dados da tabela como",
-certifique-se de que a opção selecionada é CSV, e clique em "Download".
+"Resultados", clique em "Respostas". Certifique-se de que:
+
+* na seção "O que incluir no relatório", todos os tipos de tentativa
+  estão incluídos (em progresso, vencidas, finalizadas, e nunca
+  enviadas), e a opção "Mostrar no máximo uma tentativa finalizada por
+  usuário" *não* está selecionada; e
+* em "Baixar dados da tabela como", a opção selecionada é "CSV";
+
+e então clique em "Download".
 Vamos chamar o arquivo baixado de `Respostas.csv`.
 
 

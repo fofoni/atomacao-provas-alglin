@@ -13,6 +13,11 @@ import pandas as pd
 # Para garantir que vai funcionar, use 3.7 ou mais recente.
 assert sys.version_info >= (3, 7)  # We assume dicts are ordered
 
+# TODO: deveria fazer um log automaticamente, anotando:
+#       * horário que foi chamado
+#       * todos os argumentos da linha de comando
+#       * toda a saída do script
+
 # TODO: tornar o 'colorama' obrigatório.
 try:
     from colorama import init, Fore, Style
@@ -154,23 +159,23 @@ if __name__ == "__main__":
                  f"PARTICIPANTS_CSV. Ele vai entrar na pauta "
                  f"com DRE={dre}.")
 
-        # Gambiarra para pegar alunos que colocaram 111111111 no DRE
-        if dre == "111111111":
-            dre = f"999001{count_missing_dre:03}"
-            count_missing_dre += 1
-            warn(f"O aluno de email <{row.Email}> e nome "
-                 f"'{nome_completo}' se inscreveu com "
-                 f"DRE=111111111. Ele vai entrar na pauta com "
-                 f"DRE={dre}.")
+        # # Gambiarra para pegar alunos que colocaram 111111111 no DRE
+        # if dre == "111111111":
+        #     dre = f"999001{count_missing_dre:03}"
+        #     count_missing_dre += 1
+        #     warn(f"O aluno de email <{row.Email}> e nome "
+        #          f"'{nome_completo}' se inscreveu com "
+        #          f"DRE=111111111. Ele vai entrar na pauta com "
+        #          f"DRE={dre}.")
 
-        # Gambiarra para pegar um DRE repetido
-        if dre == "115023496":
-            dre = f"999001{count_missing_dre:03}"
-            count_missing_dre += 1
-            warn(f"O aluno de email <{row.Email}> e nome "
-                 f"'{nome_completo}' se inscreveu com DRE=115023496 "
-                 f"(duplicado). Ele vai entrar na pauta com "
-                 f"DRE={dre}.")
+        # # Gambiarra para pegar um DRE repetido
+        # if dre == "115023496":
+        #     dre = f"999001{count_missing_dre:03}"
+        #     count_missing_dre += 1
+        #     warn(f"O aluno de email <{row.Email}> e nome "
+        #          f"'{nome_completo}' se inscreveu com DRE=115023496 "
+        #          f"(duplicado). Ele vai entrar na pauta com "
+        #          f"DRE={dre}.")
 
         # Verifica que este DRE já não está na pauta
         ok = True
@@ -191,7 +196,7 @@ if __name__ == "__main__":
             'numeracao': 0,
 
             # todos iguais para gerar só um lote
-            'chamada': 'P1AlgLin2020PLE',
+            'chamada': 'P3AlgLin2020PLE',  # TODO: parametrizar isso
 
             'email': email_matches[0].email,
             'dre': dre,

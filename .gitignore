@@ -6,4 +6,7 @@
 *.gab
 /data
 /build
+.ipynb_checkpoints
 .python-version
+__pycache__
+TODO

@@ -15,6 +15,9 @@ import pandas as pd
 
 from pdfrw import PdfReader, PdfWriter, IndirectPdfDict
 
+# TODO: ler o PDF a partir do ZIP, ao invés de forçar o usuário a baixar
+#       o PDF solto.
+
 # WARNING: OS RESULTADOS GERADOS ESTARÃO ERRADOS SE VOCÊ USAR
 # PYTHON 3.5 OU ANTERIOR. Se a versão for 3.6, talvez funcione.
 # Para garantir que vai funcionar, use 3.7 ou mais recente.
