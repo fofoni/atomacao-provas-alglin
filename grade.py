@@ -69,24 +69,20 @@ log_options = [
 ]
 
 
-# FIXME: esse "4" não deveria estar hard-coded
-# FIXME: o "dont_know_included" não deveria estar hard-coded
 # TODO: essa classe está uma bagunça. Esse tipo de abstração deveria
 #       ser feito de forma mais unificada com o gab.py.
 class Respostas:
-    # número de itens possíveis sem contar o "Não sei.",
-    # e.g. '4' para "a, b, c, d, Não sei."
-    _N = 4
-
-    # e.g. _opções = 'abcd'
-    _opções = [chr(ord('a') + i) for i in range(_N)]
-
     # número de erradas que elimina uma certa (ou
     # então -1 para desabilitar essa funcionalidade)
-    num_penalidade = 4
+    num_penalidade = 4  # TODO: deveria ser parametrizável
 
-    @classmethod
-    def item_from_str(cls, s: str) -> str:
+    last_is_dk = True  # TODO: deveria ser parametrizável
+
+    @staticmethod
+    def item_from_str(s: str, N: int) -> str:
+        # s: "(a)" ou "(b)" ou ... ou "Não sei."
+        # N: quantidade de itens possíveis, sem contar o "Não sei."
+
         # TODO: usar Unicode NCF para tirar os acentos, e comparar as
         #       strings sem acento.
         if s == "Não sei." or s == "Nâo sei.":
@@ -98,7 +94,7 @@ class Respostas:
             and s.endswith(')')
         ):
             x = ord(s[1]) - ord('a')
-            if x >= cls._N:
+            if x >= N:
                 raise ValueError(f"Resposta inválida: {s}.")
             return s[1]
         elif s == '-':
@@ -106,16 +102,22 @@ class Respostas:
         else:
             raise ValueError(f"Resposta inválida: {s}.")
 
-    def __init__(self, lst: List[str]):
+    def _opções(self, item: int):
+        return [chr(ord('a') + i) for i in range(self._N[item])]
+
+    def __init__(self, lst: List[str], num_ans: List[int]):
         # l = ['(a)', '(d)', 'Não sei.', '(c)', ......]
-        self._l = tuple(self.item_from_str(s) for s in lst)
+        self._N = num_ans  # lista de número de itens em cada questão
+        self._N = [nr - 1 for nr in self._N]
+        self._l = tuple(self.item_from_str(s, N)
+                        for s, N in zip(lst, num_ans))
 
     @classmethod
-    def from_row(cls, row: pd.Series):
+    def from_row(cls, row: pd.Series, num_ans: List[int]):
         resp_headers = []
         while (h := f'Resposta {len(resp_headers) + 1}') in row.index:
             resp_headers.append(h)
-        return cls(row[resp_headers])
+        return cls(row[resp_headers], num_ans)
 
     def __str__(self):
         result = ""
@@ -143,56 +145,62 @@ class Respostas:
     def count(self) -> int:
         """Quantidade de respostas afirmativas (i.e. preenchidas, e
            com valor diferente de "Não sei.")"""
-        return sum(x in self._opções for x in self._l)
+        return sum(x in self._opções(i) for i, x in enumerate(self._l))
 
     def get_item_int(self, i):
-        if self._l[i] in self._opções:
+        if self._l[i] in self._opções(i):
             return ord(self._l[i]) - ord('a')
         else:
-            return self._N
+            return self._N[i]
 
     def iter_ints(self):
         return (self.get_item_int(i) for i in range(len(self)))
 
-    def grade(self, test: MCTest, keys: List[MCKey]) -> int:
-        """Retorna a nota (número de pontos), sendo que cada questão
+    def grade(self, test: MCTest, keys: List[MCKey]) -> float:
+        """Retorna a nota (10x média de pontos), sendo que cada questão
            vale um ponto, levando em consideração a penalidade."""
         assert len(self) == len(test.items)
         assert len(self) == len(keys)
+        assert len(self) == len(self._N)
         # print("GRADING: ")
         certas = 0
         erradas = 0
         gabarito = ""
         keys = [keys[i] for i in test.perm]
-        for m, item, key in zip(self.iter_ints(), test.items, keys):
+        for m, item, key, N in zip(
+                self.iter_ints(), test.items, keys, self._N):
             # print(f"    Marcou: {m}")
             # print(f"    Item:   {item}")
             # print(f"    key:    {key}")
+            # print(f"    N:      {N}")
             # #m = opção que o aluno marcou
             # #item = questão da prova do aluno
-            assert len(item.perm) == self._N
+            assert N == len(item.perm)
             # TODO: verificar se o dont_know_included também bate
             # posição do item 'm' na prova original (.ate)
-            po = item.perm[m] if m < self._N else len(item.perm)
+            po = item.perm[m] if m < N else len(item.perm)
             # print(f"    po:     {po}")
             ponto = key.get(po)
             # print(f"    ponto:  {ponto}")
             if ponto:
                 certas += 1
                 # print(f"    certas: {certas}")
-            if m < self._N and not ponto:
+            if m < N and not ponto:
                 erradas += 1
                 # print(f"    errada: {erradas}")
             # print()
-            gabarito += \
-                key.perm_letras(item.perm, last_is_dk=True) + "-"
+            gabarito += key.perm_letras(
+                item.perm, last_is_dk=self.last_is_dk) + "-"
         if self.num_penalidade >= 0:
             # implicit check that num_penalidade != 0
             certas -= erradas // self.num_penalidade
         if certas < 0:
             certas = 0
         # print(f"GRADE: {certas}")
-        return certas, gabarito[:-1]
+        nota = 100 * certas
+        nota = nota // len(self) + (nota % len(self) > 0)
+        nota /= 10.0
+        return nota, gabarito[:-1]
 
     def is_empty(self) -> bool:
         return all(x == '-' for x in self)
@@ -200,7 +208,7 @@ class Respostas:
     def positive_attempt(self) -> bool:
         """Um 'positive attempt' é quando tem pelo menos uma resposta
            afirmativa."""
-        return not all(x not in self._opções for x in self)
+        return any(x in self._opções(i) for i, x in enumerate(self))
 
 
 class UpdateSetAction(argparse.Action):
@@ -363,6 +371,7 @@ if __name__ == "__main__":
         stringid_aluno = f"{row.nomecompleto} <{row.email}> ({row.dre})"
         test = read_check_test_from_row(g, row)
         pauta.at[row.Index, 'perm'] = test.perm.to_csv_string()
+        num_ans_list = [it.num_answers for it in test.items]
 
         if len(subdf) == 0:
             # Nenhuma tentativa submetiva
@@ -381,7 +390,7 @@ if __name__ == "__main__":
                 print(f"* Exatamente uma tentativa: {stringid_aluno}")
             pauta.at[row.Index, 'status'] = status
             pauta.at[row.Index, 'respostas'] = \
-                Respostas.from_row(subdf.iloc[0])
+                Respostas.from_row(subdf.iloc[0], num_ans_list)
             nota, gabarito = pauta.at[row.Index, 'respostas'].grade(
                 test, g.keys)
             pauta.at[row.Index, 'nota'] = nota
@@ -391,7 +400,7 @@ if __name__ == "__main__":
         # len(subdf) >= 2, ou seja, o aluno submeteu pelo menos 2
         # tentativas
 
-        tentativas = [Respostas.from_row(r)
+        tentativas = [Respostas.from_row(r, num_ans_list)
                       for _, r in subdf.iterrows()]
 
         nonempty_mask = [not r.is_empty() for r in tentativas]

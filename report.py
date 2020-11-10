@@ -16,5 +16,5 @@ def pauta_com_notas(path='pauta_com_notas.csv'):
         }
     )
     global num_items
-    num_items = len(df['respostas'].iloc[0].split('-'))
+    num_items = len(df['perm'].iloc[0].split('-'))
     return df

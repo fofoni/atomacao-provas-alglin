@@ -50,6 +50,9 @@ class Gab:
         else:
             return matches[0]
 
+    def list_of_num_ans(self):
+        return [k.length for k in self.keys]
+
     @classmethod
     def from_gab_file(cls, path, verbose=False):
         if verbose:
@@ -131,7 +134,7 @@ class Gab:
                             idx = self.max_num_ans - 1
                         else:
                             idx = ord(char) - ord('A')
-                            if idx not in range(self.max_num_ans):
+                            if idx not in range(self.keys[item].length):
                                 raise ValueError(
                                     f"Resposta \"{char}\" inválida "
                                     f"para o item {item + 1}")
@@ -145,9 +148,10 @@ class Gab:
     def from_zip_file(cls, path, verbose=False):
         """Monta o gabarito a partir do ZIP baixado do AtenaME.
 
-        Se esse zip tiver um .adg, lê também o adendo. Se houver um .adg
-        a ser considerado que não esteja dentro do zip, use o método
-        update_from_addendum do Gab retornado por este método, e.g.:
+        Se esse zip tiver um .adg com o mesmo nome que o .gab, lê também
+        o adendo. Se houver um .adg a ser considerado que não esteja
+        dentro do zip, use o método update_from_addendum do Gab
+        retornado por este método, e.g.:
 
         >>> gab = Gab.from_zip_file("~/p1.zip")
         >>> gab.update_from_addendum("~/p1.adg")
@@ -176,10 +180,11 @@ class Gab:
             adg_path = gab_path.with_suffix(".adg")
             if adg_path.exists():
                 gab.update_from_addendum(adg_path, verbose=verbose)
-            return gab
+        return gab
 
 
 def _assumes_file_open(fct):
+    """Decorador de método que força um self._assert_open()"""
     @functools.wraps(fct)
     def check_and_call(self, *args, **kwargs):
         self._assert_open()
@@ -213,9 +218,11 @@ class _GabReader:
 
     Obs:
     * Java sempre lê/escreve em big-endian [1]
-    * Java usa um encoding próprio para strings [1]
+    * Java usa um encoding próprio para strings [1, 2, 3]
 
     [1] https://docs.oracle.com/javase/7/docs/api/java/io/DataInput.html
+    [2] https://en.wikipedia.org/wiki/UTF-8#Modified_UTF-8
+    [3] https://en.wikipedia.org/wiki/CESU-8
     """
 
     MAGIC_v1 = 0xb3a29cd1
@@ -303,6 +310,7 @@ class _GabReader:
 
         def perm_letras(
                 self, perm: Permutation, last_is_dk: bool) -> str:
+            assert len(perm) == self.length - last_is_dk
             letras = ''.join(chr(ord('A') + i)
                              for i in range(self.length - last_is_dk)
                              if self.get(perm[i]))
@@ -428,7 +436,7 @@ class _GabReader:
     @_assumes_file_open
     def read_check_header(self) -> Tuple[int, int, int, bool]:
         if self.read_header:
-            raise GabReaderError("Cabeçalho já foi lido!")
+            raise GabReaderRuntimeError("Cabeçalho já foi lido!")
 
         num_tests = self._read_int()
         if not (num_tests > 0):
@@ -486,6 +494,7 @@ class _GabReader:
 
     @_assumes_file_open
     def _read_check_student_data(self) -> Optional[Student]:
+        """Retorna um Student, ou None caso seja uma prova sem nome."""
         string = self._read_mutf8()
         if self.OLD_SEPARATOR in string:
             self._raise_invalid_gab("Formato antigo não suportado.")
@@ -510,9 +519,9 @@ class _GabReader:
     def _read_check_item(self) -> MCItem:
         # permutação das respostas
         p = self._read_check_permutation()
-        if len(p) != self.header_mna - self.header_dki:
+        if len(p) > self.header_mna - self.header_dki:
             self._raise_invalid_gab(
-                f"Permutação {p} deveria ter {self.header_mna} - "
+                f"Permutação {p} deveria ter até {self.header_mna} - "
                 f"{int(self.header_dki)} itens.")
 
         # resposta certa
@@ -523,7 +532,7 @@ class _GabReader:
 
         # número de respostas (incluindo "Não sei.")
         nr = self._read_int()
-        if nr != self.header_mna:
+        if nr != len(p) + self.header_dki:
             self._raise_invalid_gab(
                 f"Quantidade de respostas {c} deveria ser {len(p)} + "
                 f"{int(self.header_dki)}.")
@@ -565,12 +574,12 @@ class _GabReader:
         perm = self._read_check_permutation()  # permutação das questões
         st = self._read_check_student_data()
         items = []
-        for i in perm:
+        for j in perm:
             item = self._read_check_item()  # questão
-            if item.num_orig != i:
+            if item.num_orig != j:
                 self._raise_invalid_gab(
                     f"Permutação dos itens {perm} em desacordo com o "
-                    f"campo num_orig do {i}-ésimo item: {item}.")
+                    f"campo num_orig do {j}-ésimo item: {item}.")
             items.append(item)
         return self.MCTest(perm=perm, st=st, items=items)
 
@@ -582,8 +591,23 @@ class _GabReader:
         testes_com_nome = []
         testes_sem_nome = []
         num_fields: int
+        num_ans_list: List[int]
+        num_ans_list_orig = None
         for _ in range(self.header_nt):
             t = self._read_check_test()
+            num_ans_list = [it.num_answers for it in t.items]
+            if num_ans_list_orig is None:
+                num_ans_list_orig = [None for _ in num_ans_list]
+                assert len(t.perm) == len(num_ans_list)
+                for j, N in zip(t.perm, num_ans_list):
+                    num_ans_list_orig[j] = N
+            else:
+                assert len(t.perm) == len(num_ans_list)
+                for j, N in zip(t.perm, num_ans_list):
+                    if num_ans_list_orig[j] != N:
+                        self._raise_invalid_gab(
+                            f"Teste com quantidade inválida de "
+                            f"respostas em cada item: {t.items}.")
             if len(testes_sem_nome) == 0:
                 # Todos os testes até agora foram *com* nome
                 if t.st:
@@ -605,8 +629,8 @@ class _GabReader:
                     self._raise_invalid_gab(
                         f"Teste com nome após teste sem nome: {t.st}")
                 testes_sem_nome.append(t)
-        keys = [self.MCKey(1, length=self.header_mna)
-                for _ in range(self.header_ni)]
+        keys = [self.MCKey(1 << 0, length=nr)
+                for nr in num_ans_list_orig]
         return testes_com_nome, testes_sem_nome, keys
 
     @_assumes_file_open
