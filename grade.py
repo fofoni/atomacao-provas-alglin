@@ -65,7 +65,7 @@ log_options = [
     'only_empty_attempts',
     'no_positive_attempts',
     'one_positive_attempt',
-    'lastpos_atmost1_nonpos',
+    'lastpos_atmost2_nonpos',
 ]
 
 
@@ -85,7 +85,7 @@ class Respostas:
 
         # TODO: usar Unicode NCF para tirar os acentos, e comparar as
         #       strings sem acento.
-        if s == "Não sei." or s == "Nâo sei.":
+        if s.lower() in ["não sei.", "nâo sei.", "não sei"]:
             return '.'
         elif (
             isinstance(s, str)
@@ -321,7 +321,7 @@ if __name__ == "__main__":
 
     parser.add_argument(
         "--log", "++log", choices=log_options,
-        default={'lastpos_atmost1_nonpos'},
+        default={'lastpos_atmost2_nonpos'},
         action=UpdateSetAction,
         help="Quais casos avisar no stdout (ao invés de processar "
              "em silêncio)",
@@ -458,10 +458,10 @@ if __name__ == "__main__":
             # salva como "resposta" a única tentativa positiva.
             effective_attempt_idx = positive_attempt_mask.index(True)
 
-        # se o último (entre os positivos) tem no máx. 1 entrada
-        # não-positiva, retorna ele
-        elif last_positive_count >= num_questões - 1:
-            status = 'lastpos_atmost1_nonpos'
+        # se o último (entre os positivos) tem no máx. 2 entradas
+        # não-positivas, retorna ele
+        elif last_positive_count >= num_questões - 2:
+            status = 'lastpos_atmost2_nonpos'
             if status in args.log:
                 print(f"* Submeteu {len(subdf)} tentativas, a última "
                       f"positiva com {last_positive_count:>2} itens: "
