@@ -85,7 +85,8 @@ class Respostas:
 
         # TODO: usar Unicode NCF para tirar os acentos, e comparar as
         #       strings sem acento.
-        if s.lower() in ["não sei.", "nâo sei.", "não sei"]:
+        if s.lower() in ["não sei.", "nâo sei.", "não sei",
+                         "não sei\xA0"]:
             return '.'
         elif (
             isinstance(s, str)
@@ -100,7 +101,7 @@ class Respostas:
         elif s == '-':
             return '-'
         else:
-            raise ValueError(f"Resposta inválida: {s}.")
+            raise ValueError(f"Resposta inválida: '{s}' ({s.encode()})")
 
     def _opções(self, item: int):
         return [chr(ord('a') + i) for i in range(self._N[item])]
